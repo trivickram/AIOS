@@ -1,0 +1,11 @@
+# Additional requirements for AIOS Middleware Demo
+# Install with: pip install -r requirements.txt
+
+# Web framework for mock servers
+flask>=3.0.0
+
+# HTTP client for tools
+requests>=2.31.0
+
+# MCP server for JSON-RPC tools
+mcp>=1.27.0

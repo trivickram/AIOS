@@ -388,6 +388,11 @@ def restart_kernel():
         print(f"Stack trace: {traceback.format_exc()}")
         raise
 
+@app.get("/health")
+async def health():
+    """Lightweight health check endpoint."""
+    return {"status": "healthy", "service": "aios_kernel"}
+
 @app.get("/status")
 async def get_server_status():
     """Check if the server is running and core components are initialized."""

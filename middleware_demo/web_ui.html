@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIOS Middleware Demo - Control Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .card-header h2 {
+            color: #333;
+            font-size: 1.5em;
+        }
+
+        .badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .badge.legacy {
+            background: #ffeaa7;
+            color: #d63031;
+        }
+
+        .badge.modern {
+            background: #55efc4;
+            color: #00b894;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-success {
+            background: #00b894;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #d63031;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #fdcb6e;
+            color: #2d3436;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .data-display {
+            background: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .data-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+
+        .data-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .field {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+        }
+
+        .field-label {
+            font-weight: bold;
+            color: #666;
+        }
+
+        .field-value {
+            color: #333;
+        }
+
+        .action-panel {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-indicator.online {
+            background: #00b894;
+        }
+
+        .status-indicator.offline {
+            background: #d63031;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .transform-section {
+            grid-column: 1 / -1;
+        }
+
+        .transform-arrow {
+            text-align: center;
+            font-size: 3em;
+            color: white;
+            margin: 20px 0;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .stat-box .number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-box .label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading {
+            display: inline-block;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AIOS Middleware Control Panel</h1>
+            <p>Interactive Data Transformation Demo - <strong>Real AI with LLM</strong></p>
+            <div id="aiStatus" style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.2); border-radius: 5px; font-size: 0.9em;">
+                Checking AIOS readiness...
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Source Server Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>
+                        <span class="status-indicator" id="sourceStatus"></span>
+                        Source Server
+                    </h2>
+                    <span class="badge legacy">Legacy Format</span>
+                </div>
+
+                <div class="action-panel">
+                    <button class="btn btn-primary" onclick="fetchSourceData()">
+                        🔄 Refresh Data
+                    </button>
+                    <button class="btn btn-success" onclick="showAddSourceForm()">
+                        ➕ Add Customer
+                    </button>
+                </div>
+
+                <div id="sourceData" class="data-display">
+                    <div class="empty-state">
+                        <p>Click "Refresh Data" to load customers</p>
+                    </div>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="number" id="sourceCount">0</div>
+                        <div class="label">Customers</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Destination Server Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>
+                        <span class="status-indicator" id="destStatus"></span>
+                        Destination Server
+                    </h2>
+                    <span class="badge modern">Modern Format</span>
+                </div>
+
+                <div class="action-panel">
+                    <button class="btn btn-primary" onclick="fetchDestinationData()">
+                        🔄 Refresh Data
+                    </button>
+                    <button class="btn btn-danger" onclick="clearDestinationData()">
+                        🗑️ Clear All
+                    </button>
+                </div>
+
+                <div id="destinationData" class="data-display">
+                    <div class="empty-state">
+                        <p>Click "Refresh Data" to load users</p>
+                    </div>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="number" id="destCount">0</div>
+                        <div class="label">Users</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transform Section -->
+            <div class="card transform-section">
+                <div class="card-header">
+                    <h2>🔄 Data Transformation</h2>
+                </div>
+
+                <div style="text-align: center; padding: 20px;">
+                    <p style="margin-bottom: 20px; color: #666;">
+                        Transform legacy customer data to modern user format using AIOS agent
+                    </p>
+                    <button class="btn btn-warning" onclick="runTransformation()" style="font-size: 1.2em; padding: 15px 40px;">
+                        ⚡ Run Transformation
+                    </button>
+                    <div id="transformStatus" style="margin-top: 20px; font-weight: bold;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SOURCE_URL = 'http://localhost:5001';
+        const DEST_URL = 'http://localhost:5002';
+
+        // Check server status
+        async function checkServers() {
+            try {
+                const sourceRes = await fetch(`${SOURCE_URL}/health`);
+                document.getElementById('sourceStatus').className =
+                    sourceRes.ok ? 'status-indicator online' : 'status-indicator offline';
+            } catch (e) {
+                document.getElementById('sourceStatus').className = 'status-indicator offline';
+            }
+
+            try {
+                const destRes = await fetch(`${DEST_URL}/health`);
+                document.getElementById('destStatus').className =
+                    destRes.ok ? 'status-indicator online' : 'status-indicator offline';
+            } catch (e) {
+                document.getElementById('destStatus').className = 'status-indicator offline';
+            }
+        }
+
+        // Fetch source data
+        async function fetchSourceData() {
+            try {
+                const response = await fetch(`${SOURCE_URL}/api/source`);
+                const data = await response.json();
+
+                if (data.customers && data.customers.length > 0) {
+                    document.getElementById('sourceCount').textContent = data.customers.length;
+
+                    let html = '';
+                    data.customers.forEach(customer => {
+                        html += `
+                            <div class="data-item">
+                                <div class="field">
+                                    <span class="field-label">Customer ID:</span>
+                                    <span class="field-value">${customer.customer_id}</span>
+                                </div>
+                                <div class="field">
+                                    <span class="field-label">Name:</span>
+                                    <span class="field-value">${customer.first_name} ${customer.last_name}</span>
+                                </div>
+                                <div class="field">
+                                    <span class="field-label">Contact:</span>
+                                    <span class="field-value">${customer.contact_num}</span>
+                                </div>
+                                <div class="field">
+                                    <span class="field-label">Email:</span>
+                                    <span class="field-value">${customer.email_addr}</span>
+                                </div>
+                                <div class="field">
+                                    <span class="field-label">Status:</span>
+                                    <span class="field-value">${customer.status_code}</span>
+                                </div>
+                                <div class="field">
+                                    <span class="field-label">Join Date:</span>
+                                    <span class="field-value">${customer.join_date}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    document.getElementById('sourceData').innerHTML = html;
+                } else {
+                    document.getElementById('sourceData').innerHTML =
+                        '<div class="empty-state"><p>No customers found</p></div>';
+                    document.getElementById('sourceCount').textContent = '0';
+                }
+            } catch (error) {
+                document.getElementById('sourceData').innerHTML =
+                    '<div class="empty-state"><p style="color: red;">Error: ' + error.message + '</p></div>';
+            }
+        }
+
+        // Fetch destination data
+        async function fetchDestinationData() {
+            try {
+                const response = await fetch(`${DEST_URL}/api/destination/list`);
+                const data = await response.json();
+
+                if (data.users && data.users.length > 0) {
+                    document.getElementById('destCount').textContent = data.users.length;
+
+                    let html = '';
+                    data.users.forEach(user => {
+                        html += `
+                            <div class="data-item">
+                                <div class="field">
+                                    <span class="field-label">User ID:</span>
+                                    <span class="field-value">${user.userId}</span>
+                                </div>
+                                <div class="field">
+                                    <span class="field-label">Full Name:</span>
+                                    <span class="field-value">${user.fullName}</span>
+                                </div>
+                                <div class="field">
+                                    <span class="field-label">Phone:</span>
+                                    <span class="field-value">${user.phoneDetails.formatted} (${user.phoneDetails.number})</span>
+                                </div>
+                                <div class="field">
+                                    <span class="field-label">Email:</span>
+                                    <span class="field-value">${user.emailAddress}</span>
+                                </div>
+                                <div class="field">
+                                    <span class="field-label">Status:</span>
+                                    <span class="field-value">${user.accountStatus}</span>
+                                </div>
+                                <div class="field">
+                                    <span class="field-label">Registration:</span>
+                                    <span class="field-value">${user.registrationDate}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    document.getElementById('destinationData').innerHTML = html;
+                } else {
+                    document.getElementById('destinationData').innerHTML =
+                        '<div class="empty-state"><p>No users found</p></div>';
+                    document.getElementById('destCount').textContent = '0';
+                }
+            } catch (error) {
+                document.getElementById('destinationData').innerHTML =
+                    '<div class="empty-state"><p style="color: red;">Error: ' + error.message + '</p></div>';
+            }
+        }
+
+        // Clear destination data
+        async function clearDestinationData() {
+            if (!confirm('Are you sure you want to clear all destination data?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${DEST_URL}/api/destination/clear`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                alert(data.message);
+                fetchDestinationData();
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Check prerequisites before transformation
+        async function checkPrerequisites() {
+            try {
+                const response = await fetch('http://localhost:3000/api/check-prerequisites');
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                return {
+                    ready: false,
+                    errors: ['Cannot connect to UI server on port 3000']
+                };
+            }
+        }
+
+        // Run transformation with REAL AIOS + LLM
+        async function runTransformation() {
+            const statusDiv = document.getElementById('transformStatus');
+
+            // Step 1: Check prerequisites
+            statusDiv.innerHTML = '<span class="loading"></span> Checking prerequisites...';
+            statusDiv.style.color = '#667eea';
+
+            const prereqCheck = await checkPrerequisites();
+
+            if (!prereqCheck.ready) {
+                let errorHtml = '❌ <strong>Prerequisites Not Met:</strong><br><ul style="text-align: left; margin: 10px 0;">';
+                prereqCheck.errors.forEach(err => {
+                    errorHtml += `<li>${err}</li>`;
+                });
+                errorHtml += '</ul>';
+                statusDiv.innerHTML = errorHtml;
+                statusDiv.style.color = '#d63031';
+                return;
+            }
+
+            // Step 2: Run AIOS agent with LLM
+            statusDiv.innerHTML = '<span class="loading"></span> <strong>Calling AIOS Agent with LLM...</strong><br>' +
+                '<small>This will:</small><br>' +
+                '<small>1. Fetch source data via tool</small><br>' +
+                '<small>2. Send to LLM for reasoning</small><br>' +
+                '<small>3. Push transformed data via tool</small>';
+            statusDiv.style.color = '#667eea';
+
+            try {
+                const response = await fetch('http://localhost:3000/api/trigger-agent', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    statusDiv.innerHTML =
+                        '✅ <strong>AI Transformation Complete!</strong><br>' +
+                        `<small>Using: ${result.llm_used || 'LLM'}</small><br>` +
+                        '<small>✓ Data fetched from source</small><br>' +
+                        '<small>✓ LLM transformed the data</small><br>' +
+                        '<small>✓ Data pushed to destination</small>';
+                    statusDiv.style.color = '#00b894';
+
+                    // Refresh both displays
+                    setTimeout(() => {
+                        fetchSourceData();
+                        fetchDestinationData();
+                    }, 500);
+                } else {
+                    // Detailed error handling
+                    let errorHtml = '❌ <strong>Error:</strong> ' + result.message;
+
+                    if (result.type === 'api_key') {
+                        errorHtml += '<br><small>💡 Fix: Add your API key to aios/config/config.yaml</small>';
+                    } else if (result.type === 'connection') {
+                        errorHtml += '<br><small>💡 Fix: Start AIOS kernel with:<br>python3.11 -m uvicorn runtime.launch:app --host 0.0.0.0 --port 8000</small>';
+                    } else if (result.type === 'prerequisites') {
+                        errorHtml += '<br><ul style="text-align: left; margin: 10px 0;">';
+                        result.errors.forEach(err => {
+                            errorHtml += `<li>${err}</li>`;
+                        });
+                        errorHtml += '</ul>';
+                    }
+
+                    if (result.error) {
+                        errorHtml += `<br><details style="margin-top: 10px;"><summary>Technical Details</summary><pre style="font-size: 0.8em; overflow-x: auto;">${result.error}</pre></details>`;
+                    }
+
+                    statusDiv.innerHTML = errorHtml;
+                    statusDiv.style.color = '#d63031';
+                }
+            } catch (error) {
+                statusDiv.innerHTML =
+                    '❌ <strong>Connection Error</strong><br>' +
+                    'Could not connect to UI server on port 3000.<br>' +
+                    '<small>Make sure ui_server.py is running.</small>';
+                statusDiv.style.color = '#d63031';
+            }
+        }
+
+        // Show add customer form
+        async function showAddSourceForm() {
+            const customerId = prompt('Customer ID', 'CUST012');
+            if (customerId === null) {
+                return;
+            }
+
+            const firstName = prompt('First name', 'Alex');
+            if (firstName === null) {
+                return;
+            }
+
+            const lastName = prompt('Last name', 'Kim');
+            if (lastName === null) {
+                return;
+            }
+
+            const contactNum = prompt('Contact number (XXX-XXXX)', '555-1212');
+            if (contactNum === null) {
+                return;
+            }
+
+            const emailAddr = prompt('Email address', 'alex.kim@example.com');
+            if (emailAddr === null) {
+                return;
+            }
+
+            const joinDate = prompt('Join date (YYYY-MM-DD)', '2024-10-01');
+            if (joinDate === null) {
+                return;
+            }
+
+            const statusCode = prompt('Status code (A or I)', 'A');
+            if (statusCode === null) {
+                return;
+            }
+
+            const customer = {
+                customer_id: customerId.trim(),
+                first_name: firstName.trim(),
+                last_name: lastName.trim(),
+                contact_num: contactNum.trim(),
+                email_addr: emailAddr.trim(),
+                join_date: joinDate.trim(),
+                status_code: statusCode.trim().toUpperCase()
+            };
+
+            const missing = Object.entries(customer)
+                .filter(([, value]) => !value)
+                .map(([key]) => key);
+
+            if (missing.length > 0) {
+                alert('Missing fields: ' + missing.join(', '));
+                return;
+            }
+
+            try {
+                const response = await fetch(`${SOURCE_URL}/api/source/add`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ customer })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(`Added ${result.added} customer. Total: ${result.total_count}`);
+                    fetchSourceData();
+                } else {
+                    alert('Error: ' + (result.message || 'Failed to add customer'));
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Check AI status
+        async function checkAIStatus() {
+            const statusDiv = document.getElementById('aiStatus');
+            const prereqCheck = await checkPrerequisites();
+
+            if (prereqCheck.ready) {
+                statusDiv.innerHTML = '✅ <strong>AIOS Ready:</strong> LLM available, Kernel running, API keys configured';
+                statusDiv.style.background = 'rgba(0, 184, 148, 0.3)';
+            } else {
+                let errorText = '⚠️ <strong>AIOS Not Ready:</strong> ';
+                errorText += prereqCheck.errors.join('; ');
+                statusDiv.innerHTML = errorText;
+                statusDiv.style.background = 'rgba(214, 48, 49, 0.3)';
+            }
+        }
+
+        // Initialize
+        checkServers();
+        checkAIStatus();
+        setInterval(checkServers, 5000); // Check every 5 seconds
+        setInterval(checkAIStatus, 10000); // Check AI status every 10 seconds
+
+        // Auto-load data on start
+        setTimeout(() => {
+            fetchSourceData();
+            fetchDestinationData();
+        }, 500);
+    </script>
+</body>
+</html>
